@@ -1,0 +1,3193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Medicine Assistant</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    background:#eef5ff;
+    color:#1e293b;
+    overflow-x:hidden;
+    position:relative;
+}
+
+/* =========================
+   FLOATING BACKGROUND
+========================= */
+
+body::before,
+body::after{
+    content:"";
+    position:fixed;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:-1;
+}
+
+body::before{
+    width:320px;
+    height:320px;
+    background:rgba(96,165,250,.16);
+    top:5%;
+    left:-120px;
+    animation:floatingBubble1 14s ease-in-out infinite;
+    filter:blur(2px);
+}
+
+body::after{
+    width:260px;
+    height:260px;
+    background:rgba(34,211,238,.14);
+    right:-90px;
+    bottom:5%;
+    animation:floatingBubble2 17s ease-in-out infinite;
+    filter:blur(2px);
+}
+
+@keyframes floatingBubble1{
+    0%,100%{transform:translate(0,0) scale(1);}
+    25%{transform:translate(100px,60px) scale(1.08);}
+    50%{transform:translate(180px,-10px) scale(.95);}
+    75%{transform:translate(90px,-100px) scale(1.06);}
+}
+
+@keyframes floatingBubble2{
+    0%,100%{transform:translate(0,0) scale(1);}
+    30%{transform:translate(-80px,-60px) scale(1.08);}
+    60%{transform:translate(-160px,10px) scale(.94);}
+    80%{transform:translate(-70px,90px) scale(1.05);}
+}
+
+.hidden{
+    display:none!important;
+}
+
+.page{
+    min-height:100vh;
+    padding:30px 20px;
+    animation:pageEnter .55s ease both;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+@keyframes pageEnter{
+    from{opacity:0;transform:translateY(18px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(25px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+@keyframes fadeDown{
+    from{opacity:0;transform:translateY(-15px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+@keyframes scaleIn{
+    from{opacity:0;transform:scale(.92);}
+    to{opacity:1;transform:scale(1);}
+}
+
+@keyframes pulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.03);}
+}
+
+@keyframes bell{
+    0%,100%{transform:rotate(0);}
+    25%{transform:rotate(-12deg);}
+    50%{transform:rotate(12deg);}
+    75%{transform:rotate(-8deg);}
+}
+
+.card{
+    background:#fff;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    margin-bottom:20px;
+    animation:fadeUp .6s ease both;
+    transition:transform .3s ease,box-shadow .3s ease;
+}
+
+.card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 30px rgba(37,99,235,.10);
+}
+
+h1{
+    text-align:center;
+    color:#2563eb;
+    margin-bottom:10px;
+}
+
+h2{
+    color:#2563eb;
+    margin-bottom:15px;
+}
+
+h3{
+    margin-bottom:8px;
+}
+
+p{
+    line-height:1.6;
+}
+
+input,select,button{
+    width:100%;
+    padding:13px;
+    margin:8px 0;
+    border-radius:10px;
+    font-size:16px;
+}
+
+input,select{
+    border:1px solid #cbd5e1;
+    background:#fff;
+    transition:border-color .3s,box-shadow .3s,transform .2s;
+}
+
+input:focus,select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+    transform:translateY(-1px);
+}
+
+button{
+    border:0;
+    background:#2563eb;
+    color:#fff;
+    cursor:pointer;
+    transition:transform .25s,background .25s,box-shadow .25s;
+}
+
+button:hover{
+    transform:translateY(-3px);
+    background:#1d4ed8;
+    box-shadow:0 7px 16px rgba(37,99,235,.25);
+}
+
+button:active{
+    transform:translateY(0) scale(.98);
+}
+
+.secondary{
+    background:#64748b;
+}
+
+.secondary:hover{
+    background:#475569;
+}
+
+.danger{
+    background:#ef4444;
+}
+
+.danger:hover{
+    background:#dc2626;
+}
+
+.header{
+    background:linear-gradient(135deg,#2563eb,#06b6d4);
+    color:#fff;
+    padding:30px;
+    border-radius:20px;
+    margin-bottom:25px;
+    text-align:center;
+    animation:fadeDown .7s ease both;
+    box-shadow:0 12px 30px rgba(37,99,235,.20);
+}
+
+.header h1{
+    color:#fff;
+    animation:fadeDown .8s ease both;
+}
+
+.header p{
+    animation:fadeUp .9s ease both;
+}
+
+.feature-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.feature-card{
+    background:#fff;
+    padding:25px;
+    border-radius:18px;
+    text-align:center;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    transition:transform .35s,box-shadow .35s,background .35s;
+    animation:scaleIn .7s ease both;
+}
+
+.feature-card:nth-child(1){animation-delay:.05s;}
+.feature-card:nth-child(2){animation-delay:.12s;}
+.feature-card:nth-child(3){animation-delay:.19s;}
+.feature-card:nth-child(4){animation-delay:.26s;}
+.feature-card:nth-child(5){animation-delay:.33s;}
+.feature-card:nth-child(6){animation-delay:.40s;}
+
+.feature-card:hover{
+    transform:translateY(-8px) scale(1.02);
+    box-shadow:0 15px 30px rgba(37,99,235,.16);
+    background:#f8fbff;
+}
+
+.feature-card:active{
+    transform:translateY(-3px) scale(.98);
+}
+
+.icon{
+    font-size:45px;
+    margin-bottom:12px;
+    display:inline-block;
+    transition:transform .35s;
+}
+
+.feature-card:hover .icon{
+    transform:translateY(-5px) scale(1.12) rotate(3deg);
+}
+
+.feature-card h3{
+    color:#2563eb;
+}
+
+.reminder-item,
+.expiry-item{
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+    margin-top:12px;
+    border-left:5px solid #2563eb;
+    animation:fadeUp .45s ease both;
+    transition:transform .25s,box-shadow .25s;
+}
+
+.reminder-item:hover,
+.expiry-item:hover{
+    transform:translateX(4px);
+    box-shadow:0 6px 16px rgba(0,0,0,.07);
+}
+
+.reminder-item strong,
+.expiry-item strong{
+    color:#2563eb;
+}
+
+.reminder-active{
+    animation:pulse .8s infinite;
+    border-left-color:#06b6d4;
+}
+
+.reminder-active .reminder-icon{
+    display:inline-block;
+    animation:bell .6s infinite;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:15px 0;
+}
+
+.stat{
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+    background:#f1f5f9;
+    transition:transform .3s,box-shadow .3s;
+}
+
+.stat:hover{
+    transform:translateY(-4px);
+    box-shadow:0 8px 18px rgba(0,0,0,.08);
+}
+
+.stat strong{
+    display:block;
+    font-size:25px;
+    color:#2563eb;
+}
+
+.preview{
+    max-width:100%;
+    max-height:250px;
+    display:block;
+    margin:15px auto;
+    border-radius:12px;
+    animation:scaleIn .5s ease both;
+    box-shadow:0 8px 20px rgba(0,0,0,.10);
+}
+
+.chat-box{
+    height:350px;
+    overflow-y:auto;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:10px;
+    scroll-behavior:smooth;
+}
+
+.message{
+    padding:10px 14px;
+    border-radius:12px;
+    margin:8px 0;
+    max-width:85%;
+    animation:fadeUp .35s ease both;
+}
+
+.user-message{
+    background:#dbeafe;
+    margin-left:auto;
+}
+
+.bot-message{
+    background:#e2e8f0;
+}
+
+.quick-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.quick-buttons button{
+    width:auto;
+    margin:0;
+    padding:9px 14px;
+    font-size:14px;
+}
+
+.knowledge-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+    margin-top:20px;
+}
+
+.knowledge-card{
+    background:#f8fafc;
+    padding:18px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:transform .3s,background .3s,box-shadow .3s;
+    animation:fadeUp .5s ease both;
+}
+
+.knowledge-card:hover{
+    transform:translateY(-5px) scale(1.01);
+    background:#e0f2fe;
+    box-shadow:0 8px 18px rgba(37,99,235,.10);
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:1000;
+    animation:fadeUp .25s ease both;
+}
+
+.modal-content{
+    background:#fff;
+    padding:25px;
+    border-radius:18px;
+    max-width:600px;
+    width:100%;
+    max-height:80vh;
+    overflow-y:auto;
+    animation:scaleIn .35s ease both;
+    box-shadow:0 20px 50px rgba(0,0,0,.20);
+}
+
+.close-btn{
+    background:#ef4444;
+}
+
+.toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#1e293b;
+    color:#fff;
+    padding:14px 20px;
+    border-radius:10px;
+    display:none;
+    z-index:2000;
+    animation:fadeUp .3s ease;
+}
+
+.disclaimer{
+    margin-top:20px;
+    background:#fff7ed;
+    border-left:5px solid #f97316;
+    padding:15px;
+    border-radius:10px;
+    font-size:14px;
+    animation:fadeUp .6s ease both;
+}
+
+.status-safe{
+    color:#16a34a;
+    font-weight:bold;
+}
+
+.status-warning{
+    color:#f59e0b;
+    font-weight:bold;
+}
+
+.status-expired{
+    color:#dc2626;
+    font-weight:bold;
+}
+
+.empty{
+    text-align:center;
+    padding:20px;
+    color:#64748b;
+    animation:fadeUp .4s ease both;
+}
+
+/* =========================
+   SMOOTH DOSE FIELDS
+========================= */
+
+#doseSection select{
+    appearance:none;
+    -webkit-appearance:none;
+    cursor:pointer;
+    background:#fff;
+    transition:
+        border-color .3s ease,
+        box-shadow .3s ease,
+        transform .25s ease,
+        background .3s ease;
+}
+
+#doseSection select:hover{
+    border-color:#60a5fa;
+    box-shadow:0 4px 12px rgba(37,99,235,.08);
+    transform:translateY(-1px);
+}
+
+#doseSection select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    transform:translateY(-1px);
+    background:#fafdff;
+}
+
+#doseSection select option{
+    padding:12px;
+    background:#fff;
+    color:#1e293b;
+}
+
+.dose-field{
+    animation:doseFieldSmooth .45s ease both;
+}
+
+.dose-field:nth-child(1){
+    animation-delay:.05s;
+}
+
+.dose-field:nth-child(2){
+    animation-delay:.12s;
+}
+
+@keyframes doseFieldSmooth{
+    from{
+        opacity:0;
+        transform:translateY(8px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.dose-info{
+    margin-top:2px;
+    padding:0 12px;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#475569;
+    font-size:14px;
+    line-height:1.4;
+    opacity:0;
+    max-height:0;
+    overflow:hidden;
+    transition:
+        opacity .35s ease,
+        max-height .35s ease,
+        padding .35s ease,
+        margin .35s ease;
+}
+
+.dose-info.show{
+    opacity:1;
+    max-height:60px;
+    padding:10px 12px;
+    margin:0 0 6px;
+}
+
+/* Selected field highlight */
+#doseFrequency.has-value,
+#foodInstruction.has-value{
+    border-color:#60a5fa;
+    background:#f8fbff;
+}
+
+/* Smooth button inside dose section */
+#doseSection button{
+    transition:
+        transform .25s ease,
+        background .25s ease,
+        box-shadow .25s ease;
+}
+
+#doseSection button:hover{
+    transform:translateY(-2px);
+}
+
+@media(max-width:600px){
+
+    .page{
+        padding:15px;
+    }
+
+    .stats{
+        grid-template-columns:1fr;
+    }
+
+    .header{
+        padding:22px;
+    }
+
+    .feature-card{
+        padding:20px;
+    }
+
+    .toast{
+        left:15px;
+        right:15px;
+        bottom:15px;
+        text-align:center;
+    }
+}
+
+@media(prefers-reduced-motion:reduce){
+
+    *,
+    *::before,
+    *::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+        scroll-behavior:auto!important;
+    }
+}
+
+/* =========================
+   MEDICAL HISTORY
+========================= */
+
+textarea{
+    width:100%;
+    padding:13px;
+    margin:8px 0;
+    border-radius:10px;
+    font-size:16px;
+    border:1px solid #cbd5e1;
+    background:#fff;
+    min-height:84px;
+    resize:vertical;
+    transition:border-color .3s,box-shadow .3s;
+}
+
+textarea:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+.field-label{
+    display:block;
+    margin-top:10px;
+    font-size:14px;
+    font-weight:bold;
+    color:#334155;
+}
+
+.form-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.form-row>div{
+    min-width:0;
+}
+
+.mh-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:10px;
+}
+
+.mh-actions button{
+    flex:1 1 160px;
+    width:auto;
+}
+
+.mh-head{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+}
+
+.mh-head h3{
+    margin:0;
+    color:#2563eb;
+}
+
+.badge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:999px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.mh-meta{
+    margin-top:6px;
+    font-size:14px;
+    color:#475569;
+}
+
+.record-actions{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+}
+
+.record-actions button{
+    flex:1;
+    width:auto;
+    margin:0;
+    padding:9px 12px;
+    font-size:14px;
+}
+
+.detail-row{
+    margin-bottom:12px;
+}
+
+.detail-row b{
+    display:block;
+    color:#2563eb;
+    margin-bottom:2px;
+}
+
+.detail-row span{
+    white-space:pre-wrap;
+    word-break:break-word;
+}
+
+@media(max-width:600px){
+
+    .form-row{
+        grid-template-columns:1fr;
+        gap:0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- PHONE PAGE -->
+<section id="phonePage" class="page">
+<div class="container">
+
+<div class="card" style="max-width:500px;margin:60px auto">
+
+<h1>💊 Medicine Assistant</h1>
+
+<p style="text-align:center">
+Enter your phone number to continue
+</p>
+
+<input id="phoneNumber"
+       type="tel"
+       maxlength="10"
+       placeholder="Enter 10 digit mobile number">
+
+<button onclick="sendOTP()">
+Send OTP
+</button>
+
+</div>
+</div>
+</section>
+
+
+<!-- OTP PAGE -->
+<section id="otpPage" class="page hidden">
+<div class="container">
+
+<div class="card" style="max-width:500px;margin:60px auto">
+
+<h1>🔐 OTP Verification</h1>
+
+<p style="text-align:center">
+Enter the demo OTP shown below.
+</p>
+
+<div id="demoOTP"
+     style="text-align:center;font-size:25px;font-weight:bold;color:#2563eb;margin:15px">
+</div>
+
+<input id="otpInput"
+       maxlength="6"
+       placeholder="Enter OTP">
+
+<button onclick="verifyOTP()">
+Verify OTP
+</button>
+
+<button class="secondary" onclick="resendOTP()">
+Resend OTP
+</button>
+
+</div>
+</div>
+</section>
+
+
+<!-- HOME PAGE -->
+<section id="homePage" class="page hidden">
+<div class="container">
+
+<div class="header">
+
+<h1>💊 Medicine Assistant</h1>
+
+<p>
+Your simple medicine management assistant
+</p>
+
+</div>
+
+<div class="feature-grid">
+
+<div class="feature-card"
+     onclick="openFeature('doseSection')">
+
+<div class="icon">⏰</div>
+
+<h3>Medicine Dose Assistant</h3>
+
+<p>
+Set medicine dose reminders.
+</p>
+
+</div>
+
+<div class="feature-card"
+     onclick="openFeature('expirySection')">
+
+<div class="icon">📅</div>
+
+<h3>Medicine Expiry Date Tracker</h3>
+
+<p>
+Track medicine expiry dates.
+</p>
+
+</div>
+
+<div class="feature-card"
+     onclick="openFeature('scannerSection')">
+
+<div class="icon">📷</div>
+
+<h3>Scan Medicine</h3>
+
+<p>
+Scan medicine images and get information.
+</p>
+
+</div>
+
+<div class="feature-card"
+     onclick="openFeature('chatSection')">
+
+<div class="icon">🤖</div>
+
+<h3>AI Assistant</h3>
+
+<p>
+Ask basic medicine-related questions.
+</p>
+
+</div>
+
+<div class="feature-card"
+     onclick="openFeature('knowledgeSection')">
+
+<div class="icon">📚</div>
+
+<h3>Medicine Knowledge Card</h3>
+
+<p>
+Read basic medicine information.
+</p>
+
+</div>
+
+<div class="feature-card"
+     onclick="openFeature('medicalSection')">
+
+<div class="icon">🩺</div>
+
+<h3>Medical History</h3>
+
+<p>
+Save and manage patient medical records.
+</p>
+
+</div>
+
+</div>
+</div>
+</section>
+
+
+<!-- DOSE SECTION -->
+<section id="doseSection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2>⏰ Medicine Dose Assistant</h2>
+
+<input id="doseMedicine"
+       placeholder="Medicine Name">
+
+<input id="prescribedDose"
+       placeholder="Prescribed Dose (e.g. 1 tablet, 5 ml)">
+
+
+<!-- FREQUENCY -->
+<div class="dose-field">
+
+<select id="doseFrequency"
+        onchange="updateDoseInfo()">
+
+<option value="">
+Select Frequency
+</option>
+
+<option value="Once a Day">
+Once a Day
+</option>
+
+<option value="Twice a Day">
+Twice a Day
+</option>
+
+<option value="Three Times a Day">
+Three Times a Day
+</option>
+
+<option value="Four Times a Day">
+Four Times a Day
+</option>
+
+<option value="As Prescribed">
+As Prescribed
+</option>
+
+</select>
+
+<div id="frequencyInfo" class="dose-info">
+Select how often the medicine should be taken.
+</div>
+
+</div>
+
+
+<!-- FOOD INSTRUCTION -->
+<div class="dose-field">
+
+<select id="foodInstruction"
+        onchange="updateDoseInfo()">
+
+<option value="">
+Select Food Instruction
+</option>
+
+<option value="Before Food">
+Before Food
+</option>
+
+<option value="After Food">
+After Food
+</option>
+
+<option value="With Food">
+With Food
+</option>
+
+<option value="Anytime">
+Anytime
+</option>
+
+</select>
+
+<div id="foodInfo" class="dose-info">
+Select the food instruction advised for the medicine.
+</div>
+
+</div>
+
+
+<input id="doseTime"
+       type="time">
+
+<button onclick="addDoseReminder()">
+➕ Add Dose Reminder
+</button>
+
+<button class="secondary"
+        onclick="requestNotificationPermission()">
+🔔 Enable Notifications
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2>📋 Your Dose Reminders</h2>
+
+<div id="doseData"></div>
+
+</div>
+
+<div class="disclaimer">
+
+<b>Important:</b>
+
+Enter dose, frequency and food instructions only as advised by a qualified healthcare professional.
+
+This is a reminder tool, not a prescribing tool.
+
+</div>
+
+</div>
+</section>
+
+
+<!-- EXPIRY SECTION -->
+<section id="expirySection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2>📅 Medicine Expiry Date Tracker</h2>
+
+<input id="expiryName"
+       placeholder="Medicine Name">
+
+<input id="batchNo"
+       placeholder="Batch Number">
+
+<input id="expiryDate"
+       type="date">
+
+<button onclick="addExpiry()">
+➕ Add Medicine
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>📊 Expiry Summary</h2>
+
+<div class="stats">
+
+<div class="stat">
+<strong id="safeCount">0</strong>
+Safe
+</div>
+
+<div class="stat">
+<strong id="warningCount">0</strong>
+Expiring Soon
+</div>
+
+<div class="stat">
+<strong id="expiredCount">0</strong>
+Expired
+</div>
+
+</div>
+
+<div id="expiryData"></div>
+
+</div>
+
+</div>
+</section>
+
+
+<!-- SCANNER SECTION -->
+<section id="scannerSection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2>📷 Scan Medicine</h2>
+
+<input type="file"
+       id="medicineImage"
+       accept="image/*"
+       onchange="previewMedicine()">
+
+<img id="scanPreview"
+     class="preview hidden">
+
+<button onclick="scanMedicine()">
+🔍 Scan Medicine
+</button>
+
+<div id="scanResult"></div>
+
+</div>
+
+<div class="disclaimer">
+
+OCR may be inaccurate.
+
+Check the medicine package and consult a qualified healthcare professional for important information.
+
+</div>
+
+</div>
+</section>
+
+
+<!-- CHAT SECTION -->
+<section id="chatSection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2>🤖 AI Assistant</h2>
+
+<div id="chatBox"
+     class="chat-box">
+
+<div class="message bot-message">
+
+Hello! 👋 I am your Medicine Assistant.
+
+Ask me a basic medicine-related question.
+
+</div>
+
+</div>
+
+<div class="quick-buttons">
+
+<button onclick="quickQuestion('Paracetamol')">
+Paracetamol
+</button>
+
+<button onclick="quickQuestion('Cetirizine')">
+Cetirizine
+</button>
+
+<button onclick="quickQuestion('Expiry')">
+Expiry
+</button>
+
+<button onclick="quickQuestion('Safe Use')">
+Safe Use
+</button>
+
+</div>
+
+<input id="chatInput"
+       placeholder="Type your question..."
+       onkeydown="if(event.key==='Enter')sendMessage()">
+
+<button onclick="sendMessage()">
+Send
+</button>
+
+</div>
+</div>
+</section>
+
+
+<!-- KNOWLEDGE SECTION -->
+<section id="knowledgeSection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2>📚 Medicine Knowledge Card</h2>
+
+<input id="knowledgeSearch"
+       placeholder="Search medicine..."
+       oninput="renderKnowledge()">
+
+<div id="knowledgeData"
+     class="knowledge-grid"></div>
+
+</div>
+
+</div>
+</section>
+
+
+<!-- MEDICAL HISTORY SECTION -->
+<section id="medicalSection" class="page hidden">
+<div class="container">
+
+<button class="secondary"
+        onclick="goHome()">
+← Back to Home
+</button>
+
+<div class="card">
+
+<h2 id="mhFormTitle">🩺 Medical History</h2>
+
+<label class="field-label" for="mhName">Patient Name *</label>
+<input id="mhName"
+       maxlength="100"
+       placeholder="Full name of the patient">
+
+<div class="form-row">
+
+<div>
+<label class="field-label" for="mhAge">Age *</label>
+<input id="mhAge"
+       type="number"
+       min="0"
+       max="120"
+       step="1"
+       placeholder="Age in years">
+</div>
+
+<div>
+<label class="field-label" for="mhBlood">Blood Group *</label>
+<select id="mhBlood">
+<option value="">Select blood group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+<option>Unknown</option>
+</select>
+</div>
+
+</div>
+
+<label class="field-label" for="mhAllergies">Allergies</label>
+<textarea id="mhAllergies"
+          maxlength="1000"
+          placeholder="e.g. Penicillin, peanuts, dust"></textarea>
+
+<label class="field-label" for="mhConditions">Existing Medical Conditions</label>
+<textarea id="mhConditions"
+          maxlength="1000"
+          placeholder="e.g. Diabetes, hypertension"></textarea>
+
+<label class="field-label" for="mhMedicines">Current Medicines</label>
+<textarea id="mhMedicines"
+          maxlength="1000"
+          placeholder="Medicine names and how they are taken"></textarea>
+
+<label class="field-label" for="mhPrevious">Previous Medical History</label>
+<textarea id="mhPrevious"
+          maxlength="2000"
+          placeholder="Past illnesses, surgeries, hospital stays"></textarea>
+
+<label class="field-label" for="mhNotes">Doctor's Notes</label>
+<textarea id="mhNotes"
+          maxlength="2000"
+          placeholder="Notes or advice from the doctor"></textarea>
+
+<label class="field-label" for="mhDate">Record Date *</label>
+<input id="mhDate"
+       type="date">
+
+<div class="mh-actions">
+
+<button id="mhSaveBtn"
+        onclick="saveMedical()">
+💾 Save Record
+</button>
+
+<button id="mhCancelBtn"
+        class="secondary hidden"
+        onclick="cancelMedicalEdit()">
+✖ Cancel Edit
+</button>
+
+<button id="mhHistoryBtn"
+        class="secondary"
+        onclick="toggleMedicalHistory()">
+📋 View History
+</button>
+
+</div>
+
+<div class="disclaimer">
+Records are stored only in this browser on this device. Clearing browser data will remove them.
+</div>
+
+</div>
+
+<div id="mhHistoryCard"
+     class="card hidden">
+
+<h2>📋 Medical History Records</h2>
+
+<div class="mh-actions" style="margin-bottom:6px">
+
+<button class="secondary"
+        onclick="exportMedicalJSON()">
+⬇ Save to File (JSON)
+</button>
+
+<button class="secondary"
+        onclick="exportMedicalCSV()">
+⬇ Export Excel (CSV)
+</button>
+
+<button class="secondary"
+        onclick="document.getElementById('mhImportFile').click()">
+⬆ Load from File
+</button>
+
+<input id="mhImportFile"
+       class="hidden"
+       type="file"
+       accept=".json,application/json"
+       onchange="importMedical(event)">
+
+</div>
+
+<input id="mhSearch"
+       placeholder="Search by patient name"
+       oninput="renderMedicalHistory()">
+
+<div id="mhList"></div>
+
+</div>
+
+</div>
+</section>
+
+
+<!-- MEDICAL RECORD MODAL -->
+<div id="medicalModal"
+     class="modal hidden"
+     onclick="if(event.target===this)closeMedicalModal()">
+
+<div class="modal-content">
+
+<h2 id="mhModalTitle"></h2>
+
+<div id="mhModalBody"></div>
+
+<button class="close-btn"
+        onclick="closeMedicalModal()">
+Close
+</button>
+
+</div>
+</div>
+
+
+<!-- MODAL -->
+<div id="knowledgeModal"
+     class="modal hidden">
+
+<div class="modal-content">
+
+<h2 id="modalTitle"></h2>
+
+<div id="modalBody"></div>
+
+<button class="close-btn"
+        onclick="closeKnowledge()">
+Close
+</button>
+
+</div>
+</div>
+
+
+<div id="toast"
+     class="toast"></div>
+
+
+<script>
+
+/* =========================
+   OTP
+========================= */
+
+let generatedOTP='';
+
+function sendOTP(){
+
+    const p=document.getElementById('phoneNumber')
+        .value.trim();
+
+    if(!/^[0-9]{10}$/.test(p)){
+
+        showToast(
+            'Please enter a valid 10 digit number.'
+        );
+
+        return;
+    }
+
+    generatedOTP=Math.floor(
+        100000+Math.random()*900000
+    ).toString();
+
+    document.getElementById('demoOTP')
+        .textContent=
+        'Demo OTP: '+generatedOTP;
+
+    document.getElementById('phonePage')
+        .classList.add('hidden');
+
+    document.getElementById('otpPage')
+        .classList.remove('hidden');
+
+    showToast('Demo OTP generated.');
+}
+
+function verifyOTP(){
+
+    const entered=document.getElementById('otpInput')
+        .value.trim();
+
+    if(entered===generatedOTP){
+
+        document.getElementById('otpPage')
+            .classList.add('hidden');
+
+        document.getElementById('homePage')
+            .classList.remove('hidden');
+
+        showToast('Login successful!');
+
+    }else{
+
+        showToast('Incorrect OTP.');
+
+    }
+}
+
+function resendOTP(){
+    sendOTP();
+}
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+function openFeature(id){
+
+    document.getElementById('homePage')
+        .classList.add('hidden');
+
+    document.querySelectorAll(
+        '#doseSection,#expirySection,#scannerSection,#chatSection,#knowledgeSection,#medicalSection'
+    ).forEach(x=>x.classList.add('hidden'));
+
+    const section=document.getElementById(id);
+
+    section.classList.remove('hidden');
+
+    section.style.animation='none';
+
+    void section.offsetWidth;
+
+    section.style.animation=
+        'pageEnter .55s ease both';
+
+    if(id==='doseSection')
+        renderDose();
+
+    if(id==='expirySection')
+        renderExpiry();
+
+    if(id==='knowledgeSection')
+        renderKnowledge();
+
+    if(id==='medicalSection')
+        initMedical();
+}
+
+function goHome(){
+
+    document.querySelectorAll(
+        '#doseSection,#expirySection,#scannerSection,#chatSection,#knowledgeSection,#medicalSection'
+    ).forEach(x=>x.classList.add('hidden'));
+
+    document.getElementById('homePage')
+        .classList.remove('hidden');
+
+    const home=
+        document.getElementById('homePage');
+
+    home.style.animation='none';
+
+    void home.offsetWidth;
+
+    home.style.animation=
+        'pageEnter .55s ease both';
+}
+
+
+/* =========================
+   DOSE REMINDER + FREQUENCY
+========================= */
+
+let doseData=JSON.parse(
+    localStorage.getItem('medicineDoseData')||'[]'
+);
+
+let reminderTimers={};
+
+
+/* =========================
+   SMOOTH FREQUENCY + FOOD
+========================= */
+
+function updateDoseInfo(){
+
+    const frequency=
+        document.getElementById('doseFrequency').value;
+
+    const food=
+        document.getElementById('foodInstruction').value;
+
+    const frequencyInfo=
+        document.getElementById('frequencyInfo');
+
+    const foodInfo=
+        document.getElementById('foodInfo');
+
+    const frequencySelect=
+        document.getElementById('doseFrequency');
+
+    const foodSelect=
+        document.getElementById('foodInstruction');
+
+
+    /* Frequency */
+
+    if(frequency){
+
+        frequencySelect.classList.add('has-value');
+
+        frequencyInfo.classList.add('show');
+
+        frequencyInfo.textContent=
+            'Frequency selected: '+frequency;
+
+    }else{
+
+        frequencySelect.classList.remove('has-value');
+
+        frequencyInfo.classList.remove('show');
+
+    }
+
+
+    /* Food Instruction */
+
+    if(food){
+
+        foodSelect.classList.add('has-value');
+
+        foodInfo.classList.add('show');
+
+        foodInfo.textContent=
+            'Food instruction: '+food;
+
+    }else{
+
+        foodSelect.classList.remove('has-value');
+
+        foodInfo.classList.remove('show');
+
+    }
+}
+
+
+function addDoseReminder(){
+
+    const name=
+        document.getElementById('doseMedicine')
+        .value.trim();
+
+    const dose=
+        document.getElementById('prescribedDose')
+        .value.trim();
+
+    const frequency=
+        document.getElementById('doseFrequency')
+        .value;
+
+    const food=
+        document.getElementById('foodInstruction')
+        .value;
+
+    const time=
+        document.getElementById('doseTime')
+        .value;
+
+    if(
+        !name ||
+        !dose ||
+        !frequency ||
+        !food ||
+        !time
+    ){
+
+        showToast(
+            'Please fill all dose reminder fields.'
+        );
+
+        return;
+    }
+
+    const r={
+
+        id:Date.now(),
+
+        name:name,
+
+        prescribedDose:dose,
+
+        frequency:frequency,
+
+        foodInstruction:food,
+
+        time:time
+
+    };
+
+    doseData.push(r);
+
+    localStorage.setItem(
+        'medicineDoseData',
+        JSON.stringify(doseData)
+    );
+
+    document.getElementById('doseMedicine')
+        .value='';
+
+    document.getElementById('prescribedDose')
+        .value='';
+
+    document.getElementById('doseFrequency')
+        .value='';
+
+    document.getElementById('foodInstruction')
+        .value='';
+
+    document.getElementById('doseTime')
+        .value='';
+
+    updateDoseInfo();
+
+    renderDose();
+
+    scheduleReminder(r);
+
+    showToast(
+        '⏰ Reminder set for '+time
+    );
+}
+
+
+function renderDose(){
+
+    const c=
+        document.getElementById('doseData');
+
+    if(!doseData.length){
+
+        c.innerHTML=
+        '<div class="empty">No dose reminders added yet.</div>';
+
+        return;
+    }
+
+    doseData.sort(
+        (a,b)=>a.time.localeCompare(b.time)
+    );
+
+    c.innerHTML=doseData.map(r=>`
+
+    <div class="reminder-item"
+         id="reminder-${r.id}">
+
+        <h3>
+
+            <span class="reminder-icon">
+                💊
+            </span>
+
+            ${escapeHTML(r.name)}
+
+        </h3>
+
+        <p>
+
+            <b>Prescribed Dose:</b>
+
+            ${escapeHTML(r.prescribedDose)}
+
+        </p>
+
+        <p>
+
+            <b>Frequency:</b>
+
+            ${escapeHTML(
+                r.frequency || 'Not specified'
+            )}
+
+        </p>
+
+        <p>
+
+            <b>Food Instruction:</b>
+
+            ${escapeHTML(
+                r.foodInstruction || 'Not specified'
+            )}
+
+        </p>
+
+        <p>
+
+            <b>⏰ Reminder Time:</b>
+
+            ${escapeHTML(r.time)}
+
+        </p>
+
+        <button class="danger"
+                onclick="deleteDose(${r.id})">
+
+            🗑 Delete
+
+        </button>
+
+    </div>
+
+    `).join('');
+}
+
+
+function deleteDose(id){
+
+    if(reminderTimers[id])
+        clearTimeout(reminderTimers[id]);
+
+    doseData=doseData.filter(
+        x=>x.id!==id
+    );
+
+    localStorage.setItem(
+        'medicineDoseData',
+        JSON.stringify(doseData)
+    );
+
+    renderDose();
+
+    showToast(
+        'Reminder deleted.'
+    );
+}
+
+
+function scheduleReminder(r){
+
+    if(reminderTimers[r.id])
+        clearTimeout(reminderTimers[r.id]);
+
+    const now=new Date();
+
+    const [h,m]=r.time
+        .split(':')
+        .map(Number);
+
+    const t=new Date();
+
+    t.setHours(h,m,0,0);
+
+    if(t<=now)
+        t.setDate(t.getDate()+1);
+
+    reminderTimers[r.id]=setTimeout(
+
+        ()=>{
+
+            showMedicineReminder(r);
+
+            scheduleReminder(r);
+
+        },
+
+        t-now
+
+    );
+}
+
+
+function showMedicineReminder(r){
+
+    showToast(
+
+        '🔔 Medicine Reminder: '+
+        r.name+
+        ' | '+
+        r.prescribedDose+
+        ' | '+
+        r.frequency
+
+    );
+
+    const card=
+        document.getElementById(
+            'reminder-'+r.id
+        );
+
+    if(card){
+
+        card.classList.add(
+            'reminder-active'
+        );
+
+        setTimeout(
+
+            ()=>card.classList.remove(
+                'reminder-active'
+            ),
+
+            10000
+
+        );
+
+    }
+
+    playReminderSound();
+
+    if(
+        'Notification' in window &&
+        Notification.permission==='granted'
+    ){
+
+        new Notification(
+            '💊 Medicine Reminder',
+            {
+
+                body:
+                r.name+
+                '\nDose: '+
+                r.prescribedDose+
+                '\nFrequency: '+
+                r.frequency+
+                '\nFood Instruction: '+
+                r.foodInstruction+
+                '\nTime: '+
+                r.time
+
+            }
+        );
+    }
+}
+
+
+function playReminderSound(){
+
+    try{
+
+        const AC=
+            window.AudioContext||
+            window.webkitAudioContext;
+
+        if(!AC)return;
+
+        const a=new AC();
+
+        const o=a.createOscillator();
+
+        const g=a.createGain();
+
+        o.connect(g);
+
+        g.connect(a.destination);
+
+        o.frequency.value=800;
+
+        g.gain.value=.25;
+
+        o.start();
+
+        o.stop(
+            a.currentTime+.5
+        );
+
+    }catch(e){}
+}
+
+
+function requestNotificationPermission(){
+
+    if(!('Notification' in window)){
+
+        showToast(
+            'Browser notifications are not supported.'
+        );
+
+        return;
+    }
+
+    Notification.requestPermission()
+    .then(p=>{
+
+        showToast(
+
+            p==='granted'
+
+            ?'🔔 Notifications enabled!'
+
+            :'Notification permission denied.'
+
+        );
+
+    });
+}
+
+
+function loadAllDoseReminders(){
+
+    doseData.forEach(
+        scheduleReminder
+    );
+}
+
+
+/* =========================
+   EXPIRY TRACKER
+========================= */
+
+let expiryData=[];
+
+try{
+    const savedExpiry=localStorage.getItem('medicineExpiryData');
+    expiryData=savedExpiry ? JSON.parse(savedExpiry) : [];
+    if(!Array.isArray(expiryData)) expiryData=[];
+}catch(e){
+    expiryData=[];
+    localStorage.removeItem('medicineExpiryData');
+}
+
+function parseLocalDate(value){
+    if(!value) return null;
+    const parts=value.split('-').map(Number);
+    if(parts.length!==3 || parts.some(Number.isNaN)) return null;
+    const [year,month,day]=parts;
+    const date=new Date(year,month-1,day);
+    date.setHours(0,0,0,0);
+    return date;
+}
+
+function getTodayLocal(){
+    const today=new Date();
+    today.setHours(0,0,0,0);
+    return today;
+}
+
+function setExpiryMinDate(){
+    const input=document.getElementById('expiryDate');
+    if(!input) return;
+    const today=new Date();
+    const y=today.getFullYear();
+    const m=String(today.getMonth()+1).padStart(2,'0');
+    const d=String(today.getDate()).padStart(2,'0');
+    input.min=`${y}-${m}-${d}`;
+}
+
+function addExpiry(){
+    const nameInput=document.getElementById('expiryName');
+    const batchInput=document.getElementById('batchNo');
+    const dateInput=document.getElementById('expiryDate');
+
+    if(!nameInput || !dateInput) return;
+
+    const n=nameInput.value.trim();
+    const b=batchInput ? batchInput.value.trim() : '';
+    const d=dateInput.value;
+
+    if(!n || !d){
+        showToast('Please enter medicine name and expiry date.');
+        return;
+    }
+
+    const selected=parseLocalDate(d);
+    const today=getTodayLocal();
+
+    if(!selected || selected < today){
+        showToast('Please enter a valid future expiry date.');
+        return;
+    }
+
+    expiryData.push({
+        id:Date.now(),
+        name:n,
+        batch:b,
+        date:d
+    });
+
+    localStorage.setItem('medicineExpiryData',JSON.stringify(expiryData));
+
+    nameInput.value='';
+    if(batchInput) batchInput.value='';
+    dateInput.value='';
+
+    renderExpiry();
+    showToast('✅ Medicine added successfully.');
+}
+
+function getExpiryStatus(d){
+    const expiry=parseLocalDate(d);
+    const today=getTodayLocal();
+
+    if(!expiry){
+        return ['Invalid Date','status-expired'];
+    }
+
+    const days=Math.round((expiry-today)/86400000);
+
+    if(days < 0){
+        return ['Expired','status-expired'];
+    }
+
+    if(days <= 30){
+        return ['Expiring Soon','status-warning'];
+    }
+
+    return ['Safe','status-safe'];
+}
+
+function renderExpiry(){
+    const c=document.getElementById('expiryData');
+    if(!c) return;
+
+    let s=0,w=0,e=0;
+
+    if(!expiryData.length){
+        c.innerHTML='<div class="empty">No medicines added.</div>';
+    }else{
+        expiryData.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+
+        c.innerHTML=expiryData.map(x=>{
+            const [st,cl]=getExpiryStatus(x.date);
+
+            if(st==='Safe') s++;
+            if(st==='Expiring Soon') w++;
+            if(st==='Expired' || st==='Invalid Date') e++;
+
+            return `
+            <div class="expiry-item">
+                <strong>💊 ${escapeHTML(x.name||'Medicine')}</strong>
+                <p><b>Batch:</b> ${escapeHTML(x.batch||'Not provided')}</p>
+                <p><b>Expiry:</b> ${escapeHTML(x.date||'')}</p>
+                <p class="${cl}">${st}</p>
+                <button class="danger" onclick="deleteExpiry(${Number(x.id)||0})">🗑 Delete</button>
+            </div>`;
+        }).join('');
+    }
+
+    const safe=document.getElementById('safeCount');
+    const warning=document.getElementById('warningCount');
+    const expired=document.getElementById('expiredCount');
+    if(safe) safe.textContent=s;
+    if(warning) warning.textContent=w;
+    if(expired) expired.textContent=e;
+}
+
+function deleteExpiry(id){
+    expiryData=expiryData.filter(x=>Number(x.id)!==Number(id));
+    localStorage.setItem('medicineExpiryData',JSON.stringify(expiryData));
+    renderExpiry();
+    showToast('Medicine deleted.');
+}
+
+
+/* =========================
+   MEDICINE SCANNER
+========================= */
+
+function previewMedicine(){
+
+    const f=
+        document.getElementById(
+            'medicineImage'
+        ).files[0];
+
+    if(f){
+
+        const preview=
+            document.getElementById(
+                'scanPreview'
+            );
+
+        preview.src=
+            URL.createObjectURL(f);
+
+        preview.classList.remove(
+            'hidden'
+        );
+    }
+}
+
+
+const db={
+
+    paracetamol:{
+
+        name:'Paracetamol',
+
+        use:'Commonly used for pain and fever relief.',
+
+        note:'Follow the medicine label or professional advice.'
+
+    },
+
+    cetirizine:{
+
+        name:'Cetirizine',
+
+        use:'Commonly used for allergy symptoms.',
+
+        note:'May cause sleepiness in some people.'
+
+    },
+
+    ibuprofen:{
+
+        name:'Ibuprofen',
+
+        use:'Commonly used for pain and inflammation.',
+
+        note:'Follow the medicine label or professional advice.'
+
+    },
+
+    amoxicillin:{
+
+        name:'Amoxicillin',
+
+        use:'An antibiotic used for certain bacterial infections.',
+
+        note:'Use only when prescribed by a qualified healthcare professional.'
+
+    }
+
+};
+
+
+async function scanMedicine(){
+
+    const f=
+        document.getElementById(
+            'medicineImage'
+        ).files[0];
+
+    const result=
+        document.getElementById(
+            'scanResult'
+        );
+
+    if(!f){
+
+        showToast(
+            'Please select a medicine image.'
+        );
+
+        return;
+    }
+
+    result.innerHTML=
+        '<p>🔍 Scanning image... Please wait.</p>';
+
+    try{
+
+        const o=
+            await Tesseract.recognize(
+                f,
+                'eng'
+            );
+
+        const txt=
+            o.data.text.trim();
+
+        const low=
+            txt.toLowerCase();
+
+        let found=null;
+
+        for(const k in db){
+
+            if(low.includes(k)){
+
+                found=db[k];
+
+                break;
+
+            }
+        }
+
+        if(found){
+
+            result.innerHTML=`
+
+            <div class="reminder-item">
+
+                <h3>
+                    💊 ${escapeHTML(found.name)}
+                </h3>
+
+                <p>
+                    <b>Information:</b>
+                    ${escapeHTML(found.use)}
+                </p>
+
+                <p>
+                    <b>Safety Note:</b>
+                    ${escapeHTML(found.note)}
+                </p>
+
+            </div>
+
+            `;
+
+        }else{
+
+            result.innerHTML=`
+
+            <div class="reminder-item">
+
+                <h3>
+                    🔎 Detected Text
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        txt||'No text detected.'
+                    )}
+                </p>
+
+            </div>
+
+            `;
+
+        }
+
+    }catch(e){
+
+        result.innerHTML=
+            '<p>Unable to scan the image.</p>';
+
+    }
+}
+
+
+/* =========================
+   AI ASSISTANT
+========================= */
+
+function sendMessage(){
+
+    const i=
+        document.getElementById(
+            'chatInput'
+        );
+
+    const v=
+        i.value.trim();
+
+    if(!v)return;
+
+    addChatMessage(
+        v,
+        'user-message'
+    );
+
+    i.value='';
+
+    setTimeout(
+
+        ()=>{
+
+            addChatMessage(
+                answerBot(v),
+                'bot-message'
+            );
+
+        },
+
+        350
+
+    );
+}
+
+
+function quickQuestion(q){
+
+    document.getElementById(
+        'chatInput'
+    ).value=q;
+
+    sendMessage();
+}
+
+
+function addChatMessage(t,c){
+
+    const d=
+        document.createElement('div');
+
+    d.className=
+        'message '+c;
+
+    d.textContent=t;
+
+    document.getElementById(
+        'chatBox'
+    ).appendChild(d);
+
+    const chatBox=
+        document.getElementById(
+            'chatBox'
+        );
+
+    chatBox.scrollTop=
+        chatBox.scrollHeight;
+}
+
+
+function answerBot(m){
+
+    const t=
+        m.toLowerCase();
+
+    if(t.includes('paracetamol'))
+
+        return 'Paracetamol is commonly used for pain and fever relief. Follow the medicine label or advice from a qualified healthcare professional.';
+
+    if(t.includes('cetirizine'))
+
+        return 'Cetirizine is commonly used for allergy symptoms. It can cause sleepiness in some people.';
+
+    if(t.includes('expiry'))
+
+        return 'Use the Medicine Expiry Date Tracker to save and check expiry dates.';
+
+    if(t.includes('safe'))
+
+        return 'Follow the medicine label and professional advice. Do not use expired medicines.';
+
+    if(
+        t.includes('hi')||
+        t.includes('hello')
+    )
+
+        return 'Hello! 👋 How can I help you with the Medicine Assistant?';
+
+    return 'I can provide basic educational information about medicines, expiry tracking and reminders. For personal medical advice, consult a qualified healthcare professional.';
+}
+
+
+/* =========================
+   KNOWLEDGE CARD
+========================= */
+
+const knowledge=[
+
+    [
+        'Paracetamol',
+        'Commonly used for pain and fever relief.',
+        'Follow the medicine label or professional advice.'
+    ],
+
+    [
+        'Cetirizine',
+        'Commonly used for allergy symptoms.',
+        'May cause sleepiness in some people.'
+    ],
+
+    [
+        'Amoxicillin',
+        'An antibiotic used for certain bacterial infections.',
+        'Use only when prescribed by a qualified healthcare professional.'
+    ],
+
+    [
+        'Omeprazole',
+        'Commonly used to reduce stomach acid.',
+        'Follow the label or professional advice.'
+    ],
+
+    [
+        'Ibuprofen',
+        'Commonly used for pain and inflammation.',
+        'Follow the medicine label or professional advice.'
+    ],
+
+    [
+        'Vitamin D3',
+        'A vitamin supplement used when supplementation is needed.',
+        'Use according to professional advice or product instructions.'
+    ]
+
+];
+
+
+function renderKnowledge(){
+
+    const q=
+        document.getElementById(
+            'knowledgeSearch'
+        ).value
+        .toLowerCase()
+        .trim();
+
+    const a=
+        knowledge.filter(
+            x=>x[0]
+                .toLowerCase()
+                .includes(q)
+        );
+
+    document.getElementById(
+        'knowledgeData'
+    ).innerHTML=
+
+    a.length
+
+    ?
+
+    a.map(x=>`
+
+        <div class="knowledge-card"
+             onclick="openKnowledge('${escapeHTML(x[0])}')">
+
+            <div style="font-size:35px">
+                💊
+            </div>
+
+            <h3>
+                ${escapeHTML(x[0])}
+            </h3>
+
+            <p>
+                ${escapeHTML(x[1])}
+            </p>
+
+        </div>
+
+    `).join('')
+
+    :
+
+    '<div class="empty">No medicine found.</div>';
+}
+
+
+function openKnowledge(n){
+
+    const x=
+        knowledge.find(
+            y=>y[0]===n
+        );
+
+    if(!x)return;
+
+    document.getElementById(
+        'modalTitle'
+    ).textContent=
+        '💊 '+x[0];
+
+    document.getElementById(
+        'modalBody'
+    ).innerHTML=`
+
+        <p>
+
+            <b>Basic Information:</b>
+
+            ${escapeHTML(x[1])}
+
+        </p>
+
+        <br>
+
+        <p>
+
+            <b>Safety Note:</b>
+
+            ${escapeHTML(x[2])}
+
+        </p>
+
+    `;
+
+    document.getElementById(
+        'knowledgeModal'
+    ).classList.remove(
+        'hidden'
+    );
+}
+
+
+function closeKnowledge(){
+
+    document.getElementById(
+        'knowledgeModal'
+    ).classList.add(
+        'hidden'
+    );
+}
+
+
+/* =========================
+   MEDICAL HISTORY
+========================= */
+
+const MEDICAL_KEY='medicalHistoryData';
+
+let medicalData=[];
+let medicalEditId=null;
+
+function mhEl(id){
+    return document.getElementById(id);
+}
+
+/* Built-in database: loaded into the browser database the first time
+   the app is opened on a device. Edit or empty this list as needed. */
+const MEDICAL_SEED=[
+    {
+        "id": "mh_sample_001",
+        "name": "Sample Patient One",
+        "age": 45,
+        "blood": "B+",
+        "allergies": "Penicillin",
+        "conditions": "Type 2 diabetes, hypertension",
+        "medicines": "Metformin 500 mg twice daily; Amlodipine 5 mg once daily",
+        "previous": "Appendectomy in 2012",
+        "notes": "Review blood sugar levels in 3 months.",
+        "date": "2026-10-01",
+        "createdAt": "2026-10-01T09:00:00.000Z",
+        "updatedAt": "2026-10-01T09:00:00.000Z"
+    },
+    {
+        "id": "mh_sample_002",
+        "name": "Sample Patient Two",
+        "age": 8,
+        "blood": "O+",
+        "allergies": "Peanuts",
+        "conditions": "Mild asthma",
+        "medicines": "Salbutamol inhaler when needed",
+        "previous": "Chickenpox in 2022",
+        "notes": "Avoid dust and cold drinks during flare-ups.",
+        "date": "2026-09-15",
+        "createdAt": "2026-09-15T09:00:00.000Z",
+        "updatedAt": "2026-09-15T09:00:00.000Z"
+    }
+];
+
+function loadMedical(){
+    try{
+        const saved=localStorage.getItem(MEDICAL_KEY);
+        if(saved===null){
+            medicalData=MEDICAL_SEED
+                .map(cleanMedicalRecord)
+                .filter(Boolean);
+            persistMedical();
+            return;
+        }
+        const parsed=JSON.parse(saved);
+        medicalData=Array.isArray(parsed)?parsed:[];
+    }catch(e){
+        medicalData=[];
+    }
+}
+
+function persistMedical(){
+    try{
+        localStorage.setItem(MEDICAL_KEY,JSON.stringify(medicalData));
+        return true;
+    }catch(e){
+        showToast('Unable to save. Browser storage may be full or blocked.');
+        return false;
+    }
+}
+
+function medicalToday(){
+    const d=new Date();
+    const m=String(d.getMonth()+1).padStart(2,'0');
+    const day=String(d.getDate()).padStart(2,'0');
+    return d.getFullYear()+'-'+m+'-'+day;
+}
+
+function formatMedicalDate(value){
+    const d=parseLocalDate(value);
+    return d
+        ? d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+        : (value||'-');
+}
+
+function initMedical(){
+    loadMedical();
+    mhEl('mhDate').max=medicalToday();
+    if(!medicalEditId && !mhEl('mhDate').value){
+        mhEl('mhDate').value=medicalToday();
+    }
+    updateMedicalHistoryButton();
+    if(!mhEl('mhHistoryCard').classList.contains('hidden')){
+        renderMedicalHistory();
+    }
+}
+
+/* ---------- SAVE (create / update) ---------- */
+
+function saveMedical(){
+
+    const name=mhEl('mhName').value.trim();
+    const ageRaw=mhEl('mhAge').value.trim();
+    const blood=mhEl('mhBlood').value;
+    const date=mhEl('mhDate').value;
+    const age=Number(ageRaw);
+
+    if(!name){
+        showToast('Please enter the patient name.');
+        mhEl('mhName').focus();
+        return;
+    }
+
+    if(ageRaw==='' || !Number.isInteger(age) || age<0 || age>120){
+        showToast('Please enter a valid age (0-120).');
+        mhEl('mhAge').focus();
+        return;
+    }
+
+    if(!blood){
+        showToast('Please select a blood group.');
+        mhEl('mhBlood').focus();
+        return;
+    }
+
+    if(!date){
+        showToast('Please select the record date.');
+        mhEl('mhDate').focus();
+        return;
+    }
+
+    if(date>medicalToday()){
+        showToast('Record date cannot be in the future.');
+        mhEl('mhDate').focus();
+        return;
+    }
+
+    const now=new Date().toISOString();
+
+    const fields={
+        name:name,
+        age:age,
+        blood:blood,
+        allergies:mhEl('mhAllergies').value.trim(),
+        conditions:mhEl('mhConditions').value.trim(),
+        medicines:mhEl('mhMedicines').value.trim(),
+        previous:mhEl('mhPrevious').value.trim(),
+        notes:mhEl('mhNotes').value.trim(),
+        date:date
+    };
+
+    const previous=medicalData.slice();
+    const wasEditing=!!medicalEditId;
+
+    if(wasEditing){
+        const i=medicalData.findIndex(r=>r.id===medicalEditId);
+        if(i===-1){
+            showToast('That record no longer exists.');
+            resetMedicalForm();
+            return;
+        }
+        medicalData[i]=Object.assign({},medicalData[i],fields,{updatedAt:now});
+    }else{
+        medicalData.push(Object.assign({
+            id:'mh_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+            createdAt:now,
+            updatedAt:now
+        },fields));
+    }
+
+    if(!persistMedical()){
+        medicalData=previous;
+        return;
+    }
+
+    resetMedicalForm();
+    showMedicalHistory();
+    showToast(wasEditing?'Record updated.':'Record saved.');
+}
+
+/* ---------- VIEW HISTORY ---------- */
+
+function renderMedicalHistory(){
+
+    const q=mhEl('mhSearch').value.trim().toLowerCase();
+
+    const list=medicalData
+        .filter(r=>String(r.name).toLowerCase().includes(q))
+        .sort((a,b)=>
+            String(b.date).localeCompare(String(a.date)) ||
+            String(b.updatedAt).localeCompare(String(a.updatedAt))
+        );
+
+    const box=mhEl('mhList');
+
+    if(!list.length){
+        box.innerHTML=
+            '<div class="empty">'+
+            (medicalData.length?'No matching records.':'No medical records saved yet.')+
+            '</div>';
+        return;
+    }
+
+    box.innerHTML=list.map(r=>`
+
+        <div class="reminder-item" data-id="${escapeHTML(r.id)}">
+
+            <div class="mh-head">
+                <h3>👤 ${escapeHTML(r.name)}</h3>
+                <span class="badge">🩸 ${escapeHTML(r.blood)}</span>
+            </div>
+
+            <p class="mh-meta">
+                Age: ${escapeHTML(r.age)} &nbsp;•&nbsp;
+                Record Date: ${escapeHTML(formatMedicalDate(r.date))}
+            </p>
+
+            ${r.conditions
+                ? `<p class="mh-meta"><b>Conditions:</b> ${escapeHTML(r.conditions.length>90?r.conditions.slice(0,90)+'…':r.conditions)}</p>`
+                : ''}
+
+            <div class="record-actions">
+                <button data-action="view">👁 View</button>
+                <button data-action="edit" class="secondary">✏️ Edit</button>
+                <button data-action="delete" class="danger">🗑 Delete</button>
+            </div>
+
+        </div>
+
+    `).join('');
+}
+
+function showMedicalHistory(){
+    loadMedical();
+    mhEl('mhHistoryCard').classList.remove('hidden');
+    renderMedicalHistory();
+    updateMedicalHistoryButton();
+    mhEl('mhHistoryCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function toggleMedicalHistory(){
+    if(mhEl('mhHistoryCard').classList.contains('hidden')){
+        showMedicalHistory();
+    }else{
+        mhEl('mhHistoryCard').classList.add('hidden');
+        updateMedicalHistoryButton();
+    }
+}
+
+function updateMedicalHistoryButton(){
+    const open=!mhEl('mhHistoryCard').classList.contains('hidden');
+    mhEl('mhHistoryBtn').textContent=open
+        ? '🙈 Hide History'
+        : '📋 View History ('+medicalData.length+')';
+}
+
+/* ---------- VIEW ONE RECORD ---------- */
+
+function viewMedical(id){
+
+    const r=medicalData.find(x=>x.id===id);
+    if(!r)return;
+
+    const row=(label,value)=>`
+        <div class="detail-row">
+            <b>${label}</b>
+            <span>${escapeHTML(value||'-')}</span>
+        </div>`;
+
+    mhEl('mhModalTitle').textContent='🩺 '+r.name;
+
+    mhEl('mhModalBody').innerHTML=
+        row('Age',r.age)+
+        row('Blood Group',r.blood)+
+        row('Allergies',r.allergies)+
+        row('Existing Medical Conditions',r.conditions)+
+        row('Current Medicines',r.medicines)+
+        row('Previous Medical History',r.previous)+
+        row("Doctor's Notes",r.notes)+
+        row('Record Date',formatMedicalDate(r.date));
+
+    mhEl('medicalModal').classList.remove('hidden');
+}
+
+function closeMedicalModal(){
+    mhEl('medicalModal').classList.add('hidden');
+}
+
+/* ---------- EDIT ---------- */
+
+function editMedical(id){
+
+    const r=medicalData.find(x=>x.id===id);
+    if(!r)return;
+
+    medicalEditId=id;
+
+    mhEl('mhName').value=r.name;
+    mhEl('mhAge').value=r.age;
+    mhEl('mhBlood').value=r.blood;
+    mhEl('mhAllergies').value=r.allergies||'';
+    mhEl('mhConditions').value=r.conditions||'';
+    mhEl('mhMedicines').value=r.medicines||'';
+    mhEl('mhPrevious').value=r.previous||'';
+    mhEl('mhNotes').value=r.notes||'';
+    mhEl('mhDate').value=r.date;
+
+    mhEl('mhFormTitle').textContent='✏️ Edit Medical Record';
+    mhEl('mhSaveBtn').textContent='💾 Update Record';
+    mhEl('mhCancelBtn').classList.remove('hidden');
+
+    mhEl('mhName').scrollIntoView({behavior:'smooth',block:'center'});
+    mhEl('mhName').focus({preventScroll:true});
+
+    showToast('Editing record. Update the fields and save.');
+}
+
+function cancelMedicalEdit(){
+    resetMedicalForm();
+    showToast('Edit cancelled.');
+}
+
+function resetMedicalForm(){
+
+    medicalEditId=null;
+
+    ['mhName','mhAge','mhAllergies','mhConditions',
+     'mhMedicines','mhPrevious','mhNotes'
+    ].forEach(id=>{mhEl(id).value='';});
+
+    mhEl('mhBlood').value='';
+    mhEl('mhDate').value=medicalToday();
+
+    mhEl('mhFormTitle').textContent='🩺 Medical History';
+    mhEl('mhSaveBtn').textContent='💾 Save Record';
+    mhEl('mhCancelBtn').classList.add('hidden');
+}
+
+/* ---------- DELETE ---------- */
+
+function deleteMedical(id){
+
+    const r=medicalData.find(x=>x.id===id);
+    if(!r)return;
+
+    if(!confirm('Delete the medical record for "'+r.name+'" dated '+formatMedicalDate(r.date)+'? This cannot be undone.'))
+        return;
+
+    const previous=medicalData.slice();
+
+    medicalData=medicalData.filter(x=>x.id!==id);
+
+    if(!persistMedical()){
+        medicalData=previous;
+        return;
+    }
+
+    if(medicalEditId===id)
+        resetMedicalForm();
+
+    renderMedicalHistory();
+    updateMedicalHistoryButton();
+    showToast('Record deleted.');
+}
+
+/* ---------- FILE BACKUP (EXPORT / IMPORT) ---------- */
+
+function downloadMedicalFile(name,text,type){
+    const blob=new Blob([text],{type:type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportMedicalJSON(){
+    loadMedical();
+    if(!medicalData.length){
+        showToast('No records to save.');
+        return;
+    }
+    downloadMedicalFile(
+        'medical_history_'+medicalToday()+'.json',
+        JSON.stringify({app:'Medicine Assistant',version:1,records:medicalData},null,2),
+        'application/json'
+    );
+    showToast('Records saved to file.');
+}
+
+function csvCell(v){
+    let t=String(v==null?'':v);
+    if(/^[=+\-@\t\r]/.test(t)) t="'"+t;
+    return '"'+t.replace(/"/g,'""')+'"';
+}
+
+function exportMedicalCSV(){
+    loadMedical();
+    if(!medicalData.length){
+        showToast('No records to export.');
+        return;
+    }
+    const head=['Patient Name','Age','Blood Group','Allergies',
+        'Existing Medical Conditions','Current Medicines',
+        'Previous Medical History',"Doctor's Notes",'Record Date'];
+    const rows=medicalData.map(r=>[
+        r.name,r.age,r.blood,r.allergies,r.conditions,
+        r.medicines,r.previous,r.notes,r.date
+    ].map(csvCell).join(','));
+    downloadMedicalFile(
+        'medical_history_'+medicalToday()+'.csv',
+        '\uFEFF'+[head.map(csvCell).join(',')].concat(rows).join('\r\n'),
+        'text/csv;charset=utf-8'
+    );
+    showToast('CSV exported.');
+}
+
+function cleanMedicalRecord(r){
+    if(!r || typeof r!=='object') return null;
+    const str=(v,max)=>String(v==null?'':v).trim().slice(0,max);
+    const bloods=['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'];
+    const name=str(r.name,100);
+    const age=Number(r.age);
+    const blood=bloods.includes(r.blood)?r.blood:'';
+    const date=/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:'';
+    if(!name || !Number.isInteger(age) || age<0 || age>120 || !blood || !date)
+        return null;
+    const now=new Date().toISOString();
+    return {
+        id:/^[\w-]{1,60}$/.test(r.id||'')?r.id:
+            'mh_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+        name:name,age:age,blood:blood,
+        allergies:str(r.allergies,1000),
+        conditions:str(r.conditions,1000),
+        medicines:str(r.medicines,1000),
+        previous:str(r.previous,2000),
+        notes:str(r.notes,2000),
+        date:date,
+        createdAt:str(r.createdAt,40)||now,
+        updatedAt:str(r.updatedAt,40)||now
+    };
+}
+
+function importMedical(e){
+
+    const file=e.target.files[0];
+    e.target.value='';
+    if(!file)return;
+
+    if(file.size>5*1024*1024){
+        showToast('File is too large.');
+        return;
+    }
+
+    const reader=new FileReader();
+
+    reader.onload=function(){
+        try{
+            const parsed=JSON.parse(reader.result);
+            const list=Array.isArray(parsed)?parsed:parsed.records;
+            if(!Array.isArray(list)) throw new Error('bad format');
+
+            loadMedical();
+            const previous=medicalData.slice();
+            const ids=new Set(medicalData.map(x=>x.id));
+            let added=0,skipped=0;
+
+            list.forEach(item=>{
+                const rec=cleanMedicalRecord(item);
+                if(!rec){skipped++;return;}
+                if(ids.has(rec.id)){skipped++;return;}
+                ids.add(rec.id);
+                medicalData.push(rec);
+                added++;
+            });
+
+            if(added && !persistMedical()){
+                medicalData=previous;
+                return;
+            }
+
+            renderMedicalHistory();
+            updateMedicalHistoryButton();
+            showToast(added+' record(s) loaded'+
+                (skipped?', '+skipped+' skipped (duplicate or invalid).':'.'));
+        }catch(err){
+            showToast('Could not read this file. Use a JSON file saved from this app.');
+        }
+    };
+
+    reader.onerror=function(){
+        showToast('Could not read this file.');
+    };
+
+    reader.readAsText(file);
+}
+
+/* ---------- EVENTS ---------- */
+
+mhEl('mhList').addEventListener('click',function(e){
+
+    const btn=e.target.closest('button[data-action]');
+    if(!btn)return;
+
+    const item=btn.closest('[data-id]');
+    if(!item)return;
+
+    const id=item.dataset.id;
+
+    if(btn.dataset.action==='view')   viewMedical(id);
+    if(btn.dataset.action==='edit')   editMedical(id);
+    if(btn.dataset.action==='delete') deleteMedical(id);
+});
+
+document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')
+        closeMedicalModal();
+});
+
+
+/* =========================
+   SECURITY
+========================= */
+
+function escapeHTML(v){
+
+    return String(v)
+
+        .replace(/&/g,'&amp;')
+
+        .replace(/</g,'&lt;')
+
+        .replace(/>/g,'&gt;')
+
+        .replace(/"/g,'&quot;')
+
+        .replace(/'/g,'&#039;');
+
+}
+
+
+/* =========================
+   TOAST
+========================= */
+
+function showToast(m){
+
+    const t=
+        document.getElementById(
+            'toast'
+        );
+
+    t.textContent=m;
+
+    t.style.display='block';
+
+    clearTimeout(
+        window.toastTimer
+    );
+
+    window.toastTimer=
+        setTimeout(
+
+            ()=>{
+
+                t.style.display='none';
+
+            },
+
+            3000
+
+        );
+}
+
+
+/* =========================
+   INITIAL LOAD
+========================= */
+
+renderDose();
+
+renderExpiry();
+setExpiryMinDate();
+
+renderKnowledge();
+
+loadAllDoseReminders();
+
+
+/* =========================
+   BUTTON EFFECT
+========================= */
+
+document.addEventListener(
+    'click',
+    function(e){
+
+        const button=
+            e.target.closest('button');
+
+        if(!button)return;
+
+        button.style.transform=
+            'scale(.97)';
+
+        setTimeout(
+
+            ()=>{
+
+                button.style.transform='';
+
+            },
+
+            120
+
+        );
+    }
+);
+
+
+window.addEventListener(
+    'load',
+    ()=>{
+
+        document.body.style.opacity='1';
+
+    }
+);
+
+</script>
+
+</body>
+</html>
